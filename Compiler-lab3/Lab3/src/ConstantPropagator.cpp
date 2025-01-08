@@ -259,9 +259,9 @@ void ConstantPropagatorVisitor::merge(ConstValueState *dest, ConstValueState *sr
 }
 
 void ConstantPropagatorVisitor::initGlobal(ConstValueState *state) {
-    // TODO
+    // DONE
     // 初始化全局变量
-
+    state->cvmap.clear( );
 }
 
 ConstValuePass::ConstValuePass(std::vector<llvm::BasicBlock *> obc_check_record, int ksize) : ModulePass(ID) {

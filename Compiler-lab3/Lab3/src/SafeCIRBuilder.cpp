@@ -82,7 +82,6 @@ void SafeCIRBuilder::obc_check(llvm::Value* index, int array_length,
 }
 
 void SafeCIRBuilder::visit(comp_unit_node& node) {
-    std::cout << "visit(comp_unit_node& node) 被调用" << std::endl;
     for (auto comp_unit : node.comp_units) {
         if (auto global_var_decl =
                 std::dynamic_pointer_cast<var_def_stmt_node>(comp_unit)) {
@@ -185,8 +184,7 @@ void SafeCIRBuilder::visit(expr_node& node) {
     // Nothing to do here.
 }
 
-void SafeCIRBuilder::visit(cond_node& node) { 
-    std::cout << "visit(cond_node& node) 被调用" << std::endl;
+void SafeCIRBuilder::visit(cond_node& node) {
     // DONE: handle condition expression.
     int lhs_const, rhs_const=0;
     bool res;   
@@ -276,7 +274,6 @@ void SafeCIRBuilder::visit(cond_node& node) {
 }
 
 void SafeCIRBuilder::visit(number_node& node) {
-    std::cout << "visit(number_node& node) 被调用" << std::endl;
     set_int_result(node.number);
 }
 
@@ -291,7 +288,6 @@ void SafeCIRBuilder::visit(binop_expr_node& node) {
             for example: "a+1" -> %res = add %a, 1; set_value_result(res)
             for example: "a+b" -> %res = add %a, %b; set_value_result(res)
     */
-    std::cout << "visit(binop_expr_node& node) 被调用" << std::endl;
     int lhs_const, rhs_const, res_const = 0;
     bool if_lhs_const, if_rhs_const;
     llvm::Value *lhs_value;
@@ -419,9 +415,7 @@ void SafeCIRBuilder::visit(unaryop_expr_node& node) {
 }
 
 void SafeCIRBuilder::visit(lval_node& node) {
-    std::cout << "visit(lval_node& node) 被调用" << std::endl;
     auto name = node.name;
-    std::cout << "lval name is " << name << std::endl;
     VarInfo var_info = lookup_variable(name);
     if (!var_info.is_valid()) {
         std::cerr << node.line << ":" << node.pos << ": variable '" << name
@@ -442,7 +436,6 @@ void SafeCIRBuilder::visit(lval_node& node) {
     */
 
     if (!var_info.is_array) {
-        std::cout << "判定为非数组" << std::endl;
         // DONE: handle scalar lval
         if (IS_EXPECT_LVAL()) {
                 set_value_result(var_info.val_ptr);
@@ -453,8 +446,6 @@ void SafeCIRBuilder::visit(lval_node& node) {
             set_value_result(load_val);
         }
     } else {
-        std::cout << "判定为数组" << std::endl;
-        std::cout << "数组大小: " << var_info.array_length << std::endl;
         // DONE: handle array lval and call obc_check to insert obc check code for obc array.
 
         llvm::Value* array_ptr = var_info.val_ptr;
@@ -474,34 +465,25 @@ void SafeCIRBuilder::visit(lval_node& node) {
             }
 
             var_info.val_ptr->getType();
-            std::cout << "准备访问索引" << std::endl;
             EXPECT_RVAL(node.array_index->accept(*this));
-            std::cout << "访问索引结束" << std::endl;
             llvm::Value *index_value;
             if (!get_result_as_value(&index_value)) {
                 std::cerr << node.line << ":" << node.pos
                           << ": array index must be a constant or a vailable" 
                           << std::endl;
                 return;
-            }  
-            std::cout << "索引值获取完成" << std::endl;
+            }
 
             if (var_info.is_obc){
                 obc_check(index_value, var_info.array_length, node.line, node.pos, name);
             }
             
-            std::cout << "array_ptr type: " << std::endl;
             if (!array_ptr) {
                 std::cerr << "Error: array_ptr is null" << std::endl;
                 return;
             }
-
-            // 打印 array_ptr 和 index_value 的类型信息
-            array_ptr->getType()->getPointerElementType()->print(llvm::outs());
-            std::cout << std::endl;
             
             llvm::Value* element_ptr = builder.CreateGEP(array_ptr->getType()->getPointerElementType(), array_ptr, {builder.getInt32(0), index_value}, "elementptr");
-            std::cout << "元素地址计算完成" << std::endl;
             if (IS_EXPECT_LVAL()) 
                 // 如果期望左值，返回数组元素的地址
                 set_value_result(element_ptr);
@@ -516,7 +498,6 @@ void SafeCIRBuilder::visit(lval_node& node) {
 }
 
 void SafeCIRBuilder::visit(var_def_node& node) {
-    std::cout << "visit(var_def_node& node) 被调用" << std::endl;
     std::string name = node.name;
     bool is_const = node.is_const;
     bool is_obc = node.is_obc;
@@ -666,9 +647,6 @@ void SafeCIRBuilder::visit(var_def_node& node) {
             } else {
                 array_type = llvm::ArrayType::get(llvm::Type::getInt32Ty(context), array_length);
                 local_variable = builder.CreateAlloca(array_type, nullptr, name);
-                std::cout << "local_variable type: " << std::endl;
-                local_variable->getType()->print(llvm::outs());
-                std::cout << std::endl;
 
                 if (!node.initializers.empty()) {
                     std::vector<llvm::Value*> elements;
@@ -719,7 +697,6 @@ void SafeCIRBuilder::visit(assign_stmt_node& node) {
         error_flag = true;
         return;
     } else {
-        std::cout << "visit(assign_stmt_node& node) 被调用" << std::endl;
         EXPECT_LVAL(node.target->accept(*this));
         llvm::Value* target_lval;
         get_result_as_value(&target_lval);
@@ -733,7 +710,6 @@ void SafeCIRBuilder::visit(assign_stmt_node& node) {
 }
 
 void SafeCIRBuilder::visit(if_stmt_node& node) {
-    std::cout << "visit(if_stmt_node& node) 被调用" << std::endl;
     // DONE: implement if-else statement.
 
     // 获取当前插入点所在的基本块所属的函数
@@ -765,7 +741,6 @@ void SafeCIRBuilder::visit(if_stmt_node& node) {
 }
 
 void SafeCIRBuilder::visit(while_stmt_node& node) {
-    std::cout << "visit(while_stmt_node& node) 被调用" << std::endl;
     // DONE: implement while statement.
 
     // 获取当前插入点所在的基本块所属的函数
