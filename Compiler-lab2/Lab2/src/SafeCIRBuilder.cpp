@@ -13,7 +13,6 @@
 // Is current expected to return an lval.
 #define IS_EXPECT_LVAL() val_type_stack.top() == FLAG::LVAL
 
-
 SafeCIRBuilder::SafeCIRBuilder(llvm::LLVMContext& ctx)
     : context(ctx), builder(ctx) {}
 
